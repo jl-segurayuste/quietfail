@@ -1,0 +1,9 @@
+[Unit]
+Description=Sync off-site backups
+
+[Service]
+Type=oneshot
+ExecStart=/opt/scripts/backup-offsite.sh || true
+
+[Install]
+WantedBy=multi-user.target

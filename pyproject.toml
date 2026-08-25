@@ -1,0 +1,31 @@
+[project]
+name = "quietfail"
+version = "0.1.0"
+description = "Encuentra scripts, unidades systemd, crontabs y workflows de CI que registran un error pero igualmente terminan en éxito (exit 0)."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+dependencies = [
+    "bashlex>=0.18",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "ruff==0.16.2",
+]
+
+[project.scripts]
+quietfail = "quietfail.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["quietfail*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

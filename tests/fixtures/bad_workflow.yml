@@ -1,0 +1,32 @@
+name: CI
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run integration tests
+        id: integration
+        continue-on-error: true
+        run: pytest tests/integration
+      - name: Deploy
+        run: ./deploy.sh
+
+  good:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run flaky test
+        id: flaky
+        continue-on-error: true
+        run: pytest tests/flaky
+      - name: Check flaky result
+        if: steps.flaky.outcome == 'failure'
+        run: echo "flaky test failed, notifying"
+
+  swallowed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lint (best effort)
+        run: ruff check . || true
