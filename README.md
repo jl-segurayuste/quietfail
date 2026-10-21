@@ -37,7 +37,7 @@ Sale con código 1 si encuentra algo (útil como paso de CI), 0 si está limpio.
 
 | Formato | Patrón |
 |---|---|
-| Scripts bash/sh | Una rama `if`/`elif`/`else`, un bucle o el cuerpo de una función registra un mensaje de error (`echo`/`printf`/`logger`, ERROR/CRITICAL/FATAL/FAIL por defecto) y ese mismo bloque no contiene después ningún `exit`/`return` con código != 0 |
+| Scripts bash/sh | Una rama `if`/`elif`/`else` o de `case`, un bucle, el cuerpo de una función o un grupo `{ …; }`/subshell (como en `cmd \|\| { echo ERROR; }`) registra un mensaje de error (`echo`/`printf`/`logger`, ERROR/CRITICAL/FATAL/FAIL por defecto, sin contar variables ni opciones como `--critical`) y ese mismo bloque no contiene después ningún `exit`/`return` con código != 0 |
 | Unidades systemd (`.service`) | `ExecStart=... \|\| true` (o `\|\| :`) — el comando real puede fallar, systemd siempre lo ve como éxito |
 | Crontabs | Una entrada silencia stdout y stderr por completo (`>/dev/null 2>&1`) sin ningún heartbeat/ping posterior — si falla, nadie se entera nunca |
 | Workflows de GitHub Actions | Un step con `continue-on-error: true` cuyo `steps.<id>.outcome` nunca se comprueba después, o un `run:` que termina en `\|\| true` |
@@ -75,6 +75,12 @@ Cuatro scanners independientes bajo `quietfail/scanners/` (`bash.py`,
 `systemd.py`, `cron.py`, `github_actions.py`), cada uno con su propia
 lógica de detección y sus propios tests. `cli.py` solo decide, por
 extensión/ubicación del fichero, a qué scanner mandarlo.
+
+Los scripts se leen con [tree-sitter-bash](https://github.com/tree-sitter/tree-sitter-bash),
+que entiende el bash real (`[[ … ]]`, `$(( … ))`, heredocs, `case`) y se recupera de
+los errores de sintaxis. Si un fichero no se pudo leer entero, `quietfail` lo dice
+por stderr (`no se pudo analizar …: análisis parcial`) y analiza lo que sí pudo: un
+fichero saltado en silencio sería justo el tipo de fallo que busca.
 
 ## Desarrollo
 

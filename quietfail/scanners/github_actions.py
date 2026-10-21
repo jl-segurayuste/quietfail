@@ -16,7 +16,7 @@ from pathlib import Path
 
 import yaml
 
-from ..finding import Finding
+from ..finding import Finding, Unparseable
 
 _SWALLOW_RE = re.compile(r"(\|\|\s*true\s*$)|(;\s*true\s*$)", re.MULTILINE)
 
@@ -32,8 +32,8 @@ def scan_file(path: Path) -> list[Finding]:
     source = path.read_text(errors="replace")
     try:
         data = yaml.safe_load(source)
-    except yaml.YAMLError:
-        return []
+    except yaml.YAMLError as e:
+        raise Unparseable(f"YAML no válido ({str(e).splitlines()[0]})") from None
 
     if not isinstance(data, dict):
         return []

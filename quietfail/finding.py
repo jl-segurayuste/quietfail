@@ -17,3 +17,15 @@ class Finding:
 
     def format(self) -> str:
         return f"{self.path}:{self.line}: [{self.scanner}] {self.message}\n    {self.snippet}"
+
+
+class Unparseable(Exception):
+    """El fichero parece de un tipo que analizamos pero no se pudo leer (entero) su sintaxis.
+
+    Antes se devolvía una lista vacía y el informe parecía limpio: un fichero sin analizar es
+    justo el tipo de fallo silencioso que esta herramienta busca. La CLI los lista aparte.
+    `findings` trae lo que sí se pudo analizar (análisis parcial)."""
+
+    def __init__(self, reason: str, findings: list[Finding] | None = None) -> None:
+        super().__init__(reason)
+        self.findings = findings or []

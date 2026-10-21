@@ -1,12 +1,13 @@
 [project]
 name = "quietfail"
-version = "0.1.0"
+version = "0.2.0"
 description = "Encuentra scripts, unidades systemd, crontabs y workflows de CI que registran un error pero igualmente terminan en éxito (exit 0)."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
 dependencies = [
-    "bashlex>=0.18",
+    "tree-sitter>=0.23",
+    "tree-sitter-bash>=0.23",
     "pyyaml>=6.0",
 ]
 

@@ -21,5 +21,10 @@ def build_keyword_regex(keywords: tuple[str, ...] = DEFAULT_KEYWORDS) -> re.Patt
     return re.compile(r"\b(" + "|".join(escaped) + r")\b", re.IGNORECASE)
 
 
+# Lo que no es texto del mensaje: expansiones ($var, ${var:-x}, $(cmd), `cmd`) y opciones (--critical).
+# Sin esto, `echo "fallidos: ${failed}"` o `echo "Usage: -c|--critical"` contaban como errores.
+_NOT_MESSAGE = re.compile(r"\$\{[^}]*\}|\$\([^)]*\)|`[^`]*`|\$\w+|(?<![\w-])--?[\w-]+")
+
+
 def message_looks_like_error(text: str, pattern: re.Pattern[str]) -> bool:
-    return bool(pattern.search(text))
+    return bool(pattern.search(_NOT_MESSAGE.sub(" ", text)))

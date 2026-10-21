@@ -4,7 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from .finding import Finding
+from .finding import Finding, Unparseable
 from .keywords import DEFAULT_KEYWORDS
 from .scanners import bash, cron, github_actions, systemd
 
@@ -23,8 +23,9 @@ def _iter_files(root: Path):
         yield path
 
 
-def _scan_path(root: Path, keywords: tuple[str, ...]) -> list[Finding]:
+def _scan_path(root: Path, keywords: tuple[str, ...]) -> tuple[list[Finding], list[tuple[Path, str]]]:
     findings: list[Finding] = []
+    skipped: list[tuple[Path, str]] = []
     for path in _iter_files(root):
         try:
             if bash.looks_like_shell_script(path):
@@ -35,9 +36,12 @@ def _scan_path(root: Path, keywords: tuple[str, ...]) -> list[Finding]:
                 findings.extend(cron.scan_file(path))
             elif path.name.endswith((".yml", ".yaml")) and ".github/workflows" in str(path):
                 findings.extend(github_actions.scan_file(path))
+        except Unparseable as e:
+            findings.extend(e.findings)
+            skipped.append((path, str(e)))
         except (OSError, UnicodeDecodeError):
             continue
-    return findings
+    return findings, skipped
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -72,7 +76,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"quietfail: no existe la ruta '{root}'", file=sys.stderr)
         return 2
 
-    findings = _scan_path(root, keywords)
+    findings, skipped = _scan_path(root, keywords)
+    for path, reason in skipped:          # siempre, también con --quiet: es un hueco del análisis
+        print(f"quietfail: no se pudo analizar {path}: {reason}", file=sys.stderr)
 
     if not findings:
         if not args.quiet:
