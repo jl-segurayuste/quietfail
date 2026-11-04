@@ -6,22 +6,22 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
 dependencies = [
-    "tree-sitter>=0.23",
-    "tree-sitter-bash>=0.23",
-    "pyyaml>=6.0",
+    "tree-sitter>=0.26.0",
+    "tree-sitter-bash>=0.25.1",
+    "pyyaml>=6.0.3",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4",
-    "ruff==0.16.2",
+    "pytest>=9.2.0",
+    "ruff==0.17.3",
 ]
 
 [project.scripts]
 quietfail = "quietfail.cli:main"
 
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=84.2.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
