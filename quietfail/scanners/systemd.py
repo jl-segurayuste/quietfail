@@ -14,7 +14,11 @@ from pathlib import Path
 from ..finding import Finding
 
 _EXEC_LINE_RE = re.compile(r"^\s*ExecStart(?:Pre|Post)?\s*=\s*(?P<command>.+)$")
-_SWALLOW_SUFFIX_RE = re.compile(r"(\|\|\s*true\s*$)|(\|\|\s*:\s*$)")
+# `|| true` / `|| :` / `|| exit 0` al final, también dentro de `sh -c '…'` (systemd no interpreta `||`
+# por sí mismo: solo tiene efecto dentro de un shell, y entonces la línea acaba en comilla)
+_SWALLOW_SUFFIX_RE = re.compile(r"\|\|\s*(?:true|:|exit\s+0)\s*['\"]?\s*$")
+# Prefijo `-` de systemd: ignora el código de salida (puede combinarse con @, :, + y !)
+_IGNORE_PREFIX_RE = re.compile(r"^[@:+!]*-")
 
 
 def scan_file(path: Path) -> list[Finding]:
@@ -26,14 +30,30 @@ def scan_file(path: Path) -> list[Finding]:
         if not m:
             continue
         command = m.group("command").strip()
-        if _SWALLOW_SUFFIX_RE.search(command):
+        # El `-` en ExecStartPre/Post suele ser un paso opcional legítimo; en ExecStart oculta que el
+        # propio servicio falló
+        is_main = raw.strip().split("=", 1)[0].strip() == "ExecStart"
+        if is_main and _IGNORE_PREFIX_RE.match(command):
             findings.append(
                 Finding(
                     scanner="systemd",
                     path=str(path),
                     line=lineno,
                     message=(
-                        "ExecStart termina en `|| true`/`|| :` — el servicio siempre se "
+                        "el prefijo `-` hace que systemd ignore el código de salida — el servicio "
+                        "se da por bueno aunque el comando falle"
+                    ),
+                    snippet=raw.strip(),
+                )
+            )
+        elif _SWALLOW_SUFFIX_RE.search(command):
+            findings.append(
+                Finding(
+                    scanner="systemd",
+                    path=str(path),
+                    line=lineno,
+                    message=(
+                        "ExecStart termina en `|| true`/`|| :`/`|| exit 0` — el servicio siempre se "
                         "reporta como éxito aunque el comando real falle"
                     ),
                     snippet=raw.strip(),

@@ -34,3 +34,34 @@ def test_cli_lista_lo_que_no_pudo_analizar_y_sigue(tmp_path, capsys):
     captured = capsys.readouterr()
     assert code == 1 and "backup.sh" in captured.out           # el resto se sigue analizando
     assert "no se pudo analizar" in captured.err and "medir.sh" in captured.err
+
+
+def test_proyecto_dentro_de_una_carpeta_build_se_analiza(tmp_path):
+    from quietfail.cli import _scan_path
+
+    proj = tmp_path / "build" / "proyecto"
+    proj.mkdir(parents=True)
+    (proj / "x.sh").write_text('#!/bin/bash\ncp a b || echo "ERROR: fallo"\n')
+    (proj / "venv").mkdir()
+    (proj / "venv" / "y.sh").write_text('#!/bin/bash\ncp a b || echo "ERROR: fallo"\n')   # este sí se salta
+    findings, _ = _scan_path(proj, ("ERROR",))
+    assert [f.path.endswith("x.sh") for f in findings] == [True]
+
+
+def test_fichero_ilegible_se_avisa(tmp_path):
+    import os
+
+    import pytest
+
+    if os.geteuid() == 0:
+        pytest.skip("root lee cualquier fichero")
+    from quietfail.cli import _scan_path
+
+    f = tmp_path / "x.sh"
+    f.write_text('#!/bin/bash\necho "ERROR"\n')
+    f.chmod(0)
+    try:
+        _, skipped = _scan_path(tmp_path, ("ERROR",))
+        assert skipped and "no se puede leer" in skipped[0][1]
+    finally:
+        f.chmod(0o644)

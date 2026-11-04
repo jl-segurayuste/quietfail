@@ -18,7 +18,7 @@ import yaml
 
 from ..finding import Finding, Unparseable
 
-_SWALLOW_RE = re.compile(r"(\|\|\s*true\s*$)|(;\s*true\s*$)", re.MULTILINE)
+_SWALLOW_RE = re.compile(r"(?:\|\|\s*(?:true|:|exit\s+0)|;\s*true)\s*$", re.MULTILINE)
 
 
 def _line_of_key(source: str, needle: str, start_from: int = 0) -> int:
@@ -64,8 +64,11 @@ def scan_file(path: Path) -> list[Finding]:
                 job_text_after[step_id] = remaining_yaml
 
             run = step.get("run")
-            if isinstance(run, str) and _SWALLOW_RE.search(run.strip()):
-                line = _line_of_key(source, run.strip().splitlines()[-1][-40:] or run.strip())
+            match = _SWALLOW_RE.search(run.strip()) if isinstance(run, str) else None
+            if match:
+                # La línea que silencia (no la última del bloque, que antes era la que se señalaba)
+                bad = run.strip()[: match.end()].splitlines()[-1].strip()
+                line = _line_of_key(source, bad)
                 findings.append(
                     Finding(
                         scanner="github_actions",
@@ -73,10 +76,10 @@ def scan_file(path: Path) -> list[Finding]:
                         line=line,
                         message=(
                             f"job '{job_name}': el step "
-                            f"'{step.get('name', step.get('id', '?'))}' termina en `|| true`/`; true`, "
+                            f"'{step.get('name', step.get('id', '?'))}' termina en `|| true`/`|| :`/`|| exit 0`/`; true`, "
                             "silencia cualquier fallo del comando incondicionalmente"
                         ),
-                        snippet=run.strip().splitlines()[-1],
+                        snippet=bad,
                     )
                 )
 

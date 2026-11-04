@@ -18,7 +18,9 @@ def _iter_files(root: Path):
     for path in root.rglob("*"):
         if path.is_dir():
             continue
-        if any(part in _SKIP_DIRS for part in path.parts):
+        # Solo cuentan las carpetas por debajo de la raíz analizada: con la ruta absoluta, un proyecto
+        # dentro de una carpeta llamada «build» o «venv» se saltaba entero («sin hallazgos»).
+        if any(part in _SKIP_DIRS for part in path.relative_to(root).parts[:-1]):
             continue
         yield path
 
@@ -39,8 +41,9 @@ def _scan_path(root: Path, keywords: tuple[str, ...]) -> tuple[list[Finding], li
         except Unparseable as e:
             findings.extend(e.findings)
             skipped.append((path, str(e)))
-        except (OSError, UnicodeDecodeError):
-            continue
+        except (OSError, UnicodeDecodeError) as e:
+            # Un fichero que no se puede leer es un hueco del análisis: se avisa, no se calla
+            skipped.append((path, f"no se puede leer: {e.strerror if isinstance(e, OSError) else e}"))
     return findings, skipped
 
 

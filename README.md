@@ -38,9 +38,9 @@ Sale con código 1 si encuentra algo (útil como paso de CI), 0 si está limpio.
 | Formato | Patrón |
 |---|---|
 | Scripts bash/sh | Una rama `if`/`elif`/`else` o de `case`, un bucle, el cuerpo de una función o un grupo `{ …; }`/subshell (como en `cmd \|\| { echo ERROR; }`) registra un mensaje de error (`echo`/`printf`/`logger`, ERROR/CRITICAL/FATAL/FAIL por defecto, sin contar variables ni opciones como `--critical`) y ese mismo bloque no contiene después ningún `exit`/`return` con código != 0 |
-| Unidades systemd (`.service`) | `ExecStart=... \|\| true` (o `\|\| :`) — el comando real puede fallar, systemd siempre lo ve como éxito |
+| Unidades systemd (`.service`) | `ExecStart=-…` (el prefijo `-` ignora el código de salida) y `\|\| true` / `\|\| :` / `\|\| exit 0` al final, también dentro de `sh -c '…'` — el comando real puede fallar, systemd siempre lo ve como éxito. Las unidades de la distribución (`/usr/lib/systemd/system`) usan `ExecStart=-` a propósito (gettys…): analiza las tuyas, `/etc/systemd/system` |
 | Crontabs | Una entrada silencia stdout y stderr por completo (`>/dev/null 2>&1`) sin ningún heartbeat/ping posterior — si falla, nadie se entera nunca |
-| Workflows de GitHub Actions | Un step con `continue-on-error: true` cuyo `steps.<id>.outcome` nunca se comprueba después, o un `run:` que termina en `\|\| true` |
+| Workflows de GitHub Actions | Un step con `continue-on-error: true` cuyo `steps.<id>.outcome` nunca se comprueba después, o un `run:` con una línea que termina en `\|\| true`, `\|\| :`, `\|\| exit 0` o `; true` |
 
 ## Qué NO detecta (a propósito)
 

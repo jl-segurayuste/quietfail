@@ -25,3 +25,16 @@ def test_non_workflow_yaml_ignored(tmp_path):
     f = tmp_path / "config.yml"
     f.write_text("key: value\n")
     assert scan_file(f) == []
+
+
+def test_or_exit_0_y_linea_correcta(tmp_path):
+    from quietfail.scanners.github_actions import scan_file
+
+    wf = tmp_path / "ci.yml"
+    wf.write_text(
+        "jobs:\n  t:\n    steps:\n"
+        "      - run: |\n          make test || true\n          echo fin\n"
+        "      - run: make lint || exit 0\n"
+        "      - run: \"make doc || :\"\n"
+    )
+    assert [f.line for f in scan_file(wf)] == [5, 7, 8]
