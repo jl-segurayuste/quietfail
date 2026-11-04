@@ -5,4 +5,4 @@ Actions en busca de un patrón concreto: algo detectó y registró un error,
 pero el job/step/servicio igualmente terminó reportándose como éxito.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"

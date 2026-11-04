@@ -55,13 +55,22 @@ def _unwrap(node: Node) -> Node:
 
 def _command_words(node: Node) -> list[str]:
     """[nombre, argumentos...] de un `command`; [] si no lo es."""
+    if node.type == "pipeline":
+        # `echo "ERROR" | tee -a log`: el mensaje es el del primer comando de la tubería
+        first = next(iter(node.named_children), None)
+        return _command_words(first) if first is not None else []
+    extra: list[str] = []
+    if node.type == "redirected_statement":
+        # `echo >&2 "ERROR: …"`: tree-sitter toma el texto como un destino más de la redirección
+        for redirect in node.children_by_field_name("redirect"):
+            extra += [_unquote(_text(d)) for d in redirect.children_by_field_name("destination")[1:]]
     node = _unwrap(node)
     if node.type != "command":
         return []
     name = node.child_by_field_name("name")
     if name is None:
         return []
-    return [_text(name), *(_unquote(_text(c)) for c in node.children_by_field_name("argument"))]
+    return [_text(name), *(_unquote(_text(c)) for c in node.children_by_field_name("argument")), *extra]
 
 
 def _exit_arg(node: Node) -> str | None:

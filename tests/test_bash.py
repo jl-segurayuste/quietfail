@@ -97,3 +97,20 @@ def test_variables_y_opciones_no_son_el_mensaje(tmp_path):
         'echo "ERROR de verdad: $failed"\n'
     )
     assert [f.line for f in scan_file(path)] == [5]
+
+
+@pytest.mark.parametrize("line", [
+    'echo "ERROR: falló la copia" | tee -a "$LOG"',
+    'echo >&2 "ERROR: redirección delante"',
+    'printf "ERROR: %s\\n" "$f" 2>&1 | logger -t backup',
+])
+def test_flags_pipeline_and_leading_redirect(tmp_path, line):
+    script = tmp_path / "s.sh"
+    script.write_text(f"#!/bin/bash\ncp a b\n{line}\n")
+    assert len(scan_file(script)) == 1
+
+
+def test_pipeline_followed_by_exit_is_fine(tmp_path):
+    script = tmp_path / "s.sh"
+    script.write_text('#!/bin/bash\necho "ERROR: x" | tee -a log\nexit 1\n')
+    assert scan_file(script) == []
