@@ -38,3 +38,12 @@ def test_or_exit_0_y_linea_correcta(tmp_path):
         "      - run: \"make doc || :\"\n"
     )
     assert [f.line for f in scan_file(wf)] == [5, 7, 8]
+
+
+def test_step_sin_nombre_se_identifica_por_su_numero(tmp_path):
+    wf = tmp_path / ".github" / "workflows" / "ci.yml"
+    wf.parent.mkdir(parents=True)
+    wf.write_text("on: push\njobs:\n  t:\n    runs-on: x\n    steps:\n      - run: echo hola\n"
+                  "      - run: pytest || true\n")
+    [finding] = scan_file(wf)
+    assert "'n.º 2'" in finding.message

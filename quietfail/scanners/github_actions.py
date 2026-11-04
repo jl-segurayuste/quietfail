@@ -76,7 +76,7 @@ def scan_file(path: Path) -> list[Finding]:
                         line=line,
                         message=(
                             f"job '{job_name}': el step "
-                            f"'{step.get('name', step.get('id', '?'))}' termina en `|| true`/`|| :`/`|| exit 0`/`; true`, "
+                            f"'{step.get('name', step.get('id', f'n.º {i + 1}'))}' termina en `|| true`/`|| :`/`|| exit 0`/`; true`, "
                             "silencia cualquier fallo del comando incondicionalmente"
                         ),
                         snippet=bad,

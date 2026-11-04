@@ -1,6 +1,6 @@
 [project]
 name = "quietfail"
-version = "0.2.2"
+version = "0.2.3"
 description = "Encuentra scripts, unidades systemd, crontabs y workflows de CI que registran un error pero igualmente terminan en éxito (exit 0)."
 readme = "README.md"
 license = { text = "MIT" }

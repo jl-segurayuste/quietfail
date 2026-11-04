@@ -17,6 +17,12 @@ de ejecuciones ni un servicio de "ping" al que avisar — lee el código fuente
 y comprueba si ese error, una vez detectado, tiene realmente un camino hacia
 un exit code que no sea 0.
 
+## Así se ve
+
+![Salida de quietfail sobre un proyecto de ejemplo](docs/img/demo.svg)
+
+<sub>Ejecución real sobre un script de backup, una unidad systemd, un crontab y un workflow de CI que esconden sus fallos (todos los datos son ficticios).</sub>
+
 ## Instalación
 
 ```bash
